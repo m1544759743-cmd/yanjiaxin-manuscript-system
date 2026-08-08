@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>闫佳欣组稿件报名系统</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+:root {
+  --primary:#2563eb; --primary-dark:#1d4ed8; --primary-light:#eff6ff; --primary-bg:#dbeafe;
+  --success:#16a34a; --success-light:#f0fdf4; --success-bg:#dcfce7;
+  --warning:#ea580c; --warning-light:#fff7ed; --warning-bg:#fed7aa;
+  --danger:#dc2626; --danger-light:#fef2f2; --danger-bg:#fecaca;
+  --gray-1:#f8fafc; --gray-2:#e2e8f0; --gray-3:#cbd5e1;
+  --text-1:#0f172a; --text-2:#475569; --text-3:#94a3b8;
+  --radius:12px; --radius-sm:8px; --radius-lg:16px;
+  --shadow:0 1px 3px rgba(0,0,0,.04), 0 1px 2px rgba(0,0,0,.03);
+  --shadow-hover:0 4px 12px rgba(37,99,235,.08);
+}
+body { font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif; background:#f1f5f9; color:var(--text-1); line-height:1.6; font-size:14px; -webkit-font-smoothing:antialiased; }
+.hidden { display:none !important; }
+.page { max-width:520px; margin:0 auto; min-height:100vh; padding-bottom:24px; }
+
+.navbar { background:var(--primary); color:#fff; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; box-shadow:0 2px 12px rgba(37,99,235,.2); }
+.navbar h1 { font-size:16px; font-weight:600; letter-spacing:.5px; }
+.navbar .nav-btn { background:rgba(255,255,255,.18); border:none; color:#fff; padding:6px 14px; border-radius:20px; font-size:12px; cursor:pointer; transition:.2s; }
+.navbar .nav-btn:active { background:rgba(255,255,255,.3); }
+
+.tab-bar { display:flex; background:#fff; border-bottom:1px solid var(--gray-2); position:sticky; top:48px; z-index:99; }
+.tab-bar .tab { flex:1; text-align:center; padding:13px 0; font-size:13px; color:var(--text-2); font-weight:500; cursor:pointer; position:relative; transition:.2s; }
+.tab-bar .tab.active { color:var(--primary); font-weight:600; }
+.tab-bar .tab.active::after { content:''; position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:28px; height:3px; background:var(--primary); border-radius:2px; }
+
+.card { background:#fff; border-radius:var(--radius); margin:12px; padding:16px; box-shadow:var(--shadow); }
+
+.task-card { background:#fff; border-radius:var(--radius); margin:10px 12px; padding:16px; box-shadow:var(--shadow); transition:.2s; border:1px solid var(--gray-2); }
+.task-card:active { transform:scale(.98); box-shadow:var(--shadow-hover); }
+.task-card .tc-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:6px; }
+.task-card .tc-title { font-size:16px; font-weight:600; color:var(--text-1); flex:1; }
+.task-card .tc-topic { font-size:13px; color:var(--text-2); margin:4px 0 8px; line-height:1.5; }
+.task-card .tc-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:10px; padding-top:10px; border-top:1px solid var(--gray-1); }
+.task-card .tc-row .tc-status { font-size:12px; padding:3px 10px; border-radius:20px; font-weight:600; }
+.status-open { background:var(--success-bg); color:var(--success); }
+.status-closed { background:var(--gray-2); color:var(--text-3); }
+.status-done { background:var(--gray-1); color:var(--text-3); }
+.task-card .tc-row .tc-tag { font-size:12px; color:var(--text-2); display:flex; align-items:center; gap:3px; padding:3px 8px; background:var(--gray-1); border-radius:20px; }
+.task-card .tc-row .tc-tag-deadline { background:var(--warning-bg); color:var(--warning); font-weight:500; }
+.task-card .tc-row .tc-tag-urgent { background:var(--danger-bg); color:var(--danger); font-weight:600; }
+.task-card .tc-row .tc-btn { margin-left:auto; }
+
+.quality-bar { display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; }
+.quality-tag { display:inline-flex; align-items:center; gap:3px; padding:3px 8px; border-radius:6px; font-size:11px; font-weight:500; }
+.qt-reads { background:var(--primary-light); color:var(--primary); }
+.qt-interactions { background:var(--primary-bg); color:var(--primary); }
+
+.btn { display:inline-block; padding:8px 18px; border-radius:var(--radius-sm); font-size:13px; font-weight:500; border:none; cursor:pointer; text-align:center; transition:.2s; }
+.btn:active { transform:scale(.96); }
+.btn-primary { background:var(--primary); color:#fff; }
+.btn-success { background:var(--success); color:#fff; }
+.btn-outline { background:transparent; border:1px solid var(--primary); color:var(--primary); }
+.btn-block { display:block; width:100%; padding:12px; font-size:15px; border-radius:var(--radius-sm); }
+.btn-sm { padding:5px 12px; font-size:12px; border-radius:6px; }
+.btn-danger { background:var(--danger); color:#fff; }
+.btn:disabled { opacity:.5; }
+
+.form-group { margin-bottom:14px; }
+.form-group label { display:block; font-size:13px; color:var(--text-2); margin-bottom:6px; font-weight:500; }
+.form-group label .req { color:var(--danger); }
+.form-group input, .form-group textarea, .form-group select {
+  width:100%; padding:10px 12px; border:1px solid var(--gray-2); border-radius:var(--radius-sm); font-size:14px; color:var(--text-1);
+  font-family:inherit; background:#fff; transition:.2s;
+}
+.form-group input:focus, .form-group textarea:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-light); }
+.form-group textarea { resize:vertical; min-height:70px; }
+.form-group .hint { font-size:11px; color:var(--text-3); margin-top:4px; }
+.form-row { display:flex; gap:10px; }
+.form-row .form-group { flex:1; }
+
+.badge { display:inline-flex; align-items:center; padding:2px 8px; border-radius:6px; font-size:12px; font-weight:500; gap:3px; }
+.badge-open { background:var(--success-bg); color:var(--success); }
+.badge-closed { background:var(--gray-2); color:var(--text-3); }
+.badge-done { background:var(--gray-1); color:var(--text-3); }
+.badge-count { background:var(--primary-light); color:var(--primary); }
+
+.badge-status-open { background:var(--success); color:#fff; padding:3px 10px; font-size:12px; font-weight:600; border-radius:20px; }
+.badge-status-closed { background:var(--gray-2); color:var(--text-2); padding:3px 10px; font-size:12px; font-weight:500; border-radius:20px; }
+.badge-deadline { background:var(--warning); color:#fff; padding:3px 10px; font-size:12px; font-weight:600; border-radius:20px; }
+.badge-deadline-urgent { background:var(--danger); color:#fff; padding:3px 10px; font-size:12px; font-weight:600; border-radius:20px; animation:pulse 1.5s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.7;} }
+
+.reg-scroll { max-height:174px; overflow-y:auto; border-radius:var(--radius-sm); }
+.reg-scroll::-webkit-scrollbar { width:4px; }
+.reg-scroll::-webkit-scrollbar-track { background:transparent; }
+.reg-scroll::-webkit-scrollbar-thumb { background:var(--gray-3); border-radius:2px; }
+.reg-scroll-hint { font-size:11px; color:var(--text-3); text-align:center; padding:4px 0; }
+.badge-gold { background:#fef3c7; color:#b45309; }
+.badge-silver { background:#f1f5f9; color:#475569; }
+.badge-bronze { background:#fed7aa; color:#9a3412; }
+
+.rank-list { padding:0 12px; }
+.rank-item { display:flex; align-items:center; gap:12px; background:#fff; border-radius:var(--radius); padding:12px 14px; margin-bottom:8px; box-shadow:var(--shadow); border:1px solid var(--gray-2); }
+.rank-item .rank-num { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; flex-shrink:0; }
+.rank-item .rank-num.r1 { background:#fbbf24; color:#fff; }
+.rank-item .rank-num.r2 { background:#cbd5e1; color:#fff; }
+.rank-item .rank-num.r3 { background:#fb923c; color:#fff; }
+.rank-item .rank-num.rn { background:var(--gray-1); color:var(--text-3); }
+.rank-item .rank-info { flex:1; min-width:0; }
+.rank-item .rank-name { font-size:15px; font-weight:600; color:var(--text-1); }
+.rank-item .rank-detail { font-size:12px; color:var(--text-3); margin-top:2px; }
+.rank-item .rank-score { font-size:18px; font-weight:700; color:var(--primary); }
+.rank-item .rank-score span { font-size:12px; font-weight:400; color:var(--text-3); }
+
+.empty { text-align:center; padding:60px 20px; color:var(--text-3); }
+.empty .empty-icon { font-size:48px; margin-bottom:12px; }
+.empty .empty-text { font-size:14px; }
+.empty .empty-sub { font-size:12px; margin-top:4px; }
+
+.modal-mask { position:fixed; inset:0; background:rgba(15,23,42,.45); z-index:1000; display:flex; align-items:flex-end; justify-content:center; padding:0; }
+.modal { background:#fff; border-radius:var(--radius-lg) var(--radius-lg) 0 0; width:100%; max-width:520px; max-height:90vh; overflow-y:auto; animation:slideUp .25s ease; }
+@keyframes slideUp { from{transform:translateY(100%);} to{transform:translateY(0);} }
+.modal-head { padding:16px 20px; font-size:16px; font-weight:600; border-bottom:1px solid var(--gray-1); display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; background:#fff; z-index:1; }
+.modal-head .close { background:none; border:none; font-size:20px; color:var(--text-3); cursor:pointer; padding:4px; line-height:1; }
+.modal-body { padding:16px 20px; }
+.modal-foot { padding:12px 20px; border-top:1px solid var(--gray-1); display:flex; gap:10px; position:sticky; bottom:0; background:#fff; }
+
+.reg-item { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--gray-1); }
+.reg-item:last-child { border-bottom:none; }
+.reg-item .reg-name { flex:1; font-size:14px; font-weight:500; color:var(--text-1); }
+.reg-item .reg-phone { font-size:12px; color:var(--text-3); }
+.reg-item .reg-status { font-size:12px; padding:2px 8px; border-radius:6px; }
+.reg-item .reg-followers { font-size:12px; color:var(--success); font-weight:500; }
+
+.stat-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin:12px; }
+.stat-card { background:#fff; border-radius:var(--radius); padding:16px; text-align:center; box-shadow:var(--shadow); border:1px solid var(--gray-2); }
+.stat-card .stat-num { font-size:24px; font-weight:700; color:var(--primary); }
+.stat-card .stat-label { font-size:12px; color:var(--text-3); margin-top:4px; }
+.stat-card.success .stat-num { color:var(--success); }
+.stat-card.warning .stat-num { color:var(--warning); }
+
+.period-tabs { display:flex; gap:6px; padding:12px; background:#fff; border-bottom:1px solid var(--gray-1); }
+.period-tabs .pt { flex:1; text-align:center; padding:7px 0; border-radius:20px; font-size:13px; color:var(--text-2); cursor:pointer; transition:.2s; background:var(--gray-1); }
+.period-tabs .pt.active { background:var(--primary); color:#fff; font-weight:500; }
+
+.toast { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(15,23,42,.85); color:#fff; padding:10px 20px; border-radius:var(--radius-sm); font-size:14px; z-index:2000; animation:fadeIn .3s; }
+@keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+
+.admin-badge { background:var(--warning-light); color:var(--warning); padding:2px 6px; border-radius:6px; font-size:11px; font-weight:500; }
+
+/* 团队成员 */
+.member-card { background:#fff; border-radius:var(--radius); margin:8px 12px; padding:14px 16px; box-shadow:var(--shadow); border:1px solid var(--gray-2); display:flex; align-items:center; gap:12px; }
+.member-card .mc-avatar { width:40px; height:40px; border-radius:50%; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:600; flex-shrink:0; }
+.member-card .mc-info { flex:1; min-width:0; }
+.member-card .mc-name { font-size:15px; font-weight:600; color:var(--text-1); display:flex; align-items:center; gap:6px; }
+.member-card .mc-phone { font-size:12px; color:var(--text-3); margin-top:2px; }
+.member-card .mc-actions { display:flex; gap:4px; flex-shrink:0; }
+.level-badge { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; font-size:11px; font-weight:700; }
+.level-A { background:var(--danger-bg); color:var(--danger); }
+.level-B { background:var(--warning-bg); color:var(--warning); }
+.level-C { background:var(--gray-2); color:var(--text-2); }
+.member-stat { display:flex; gap:16px; padding:12px 16px; background:#fff; border-bottom:1px solid var(--gray-1); }
+.member-stat .ms-item { text-align:center; }
+.member-stat .ms-num { font-size:20px; font-weight:700; color:var(--primary); }
+.member-stat .ms-label { font-size:11px; color:var(--text-3); margin-top:2px; }
+
+@media(min-width:768px){ .page{max-width:600px; box-shadow:0 0 20px rgba(0,0,0,.06); min-height:100vh; } .modal-mask{align-items:center;padding:20px;} .modal{border-radius:var(--radius-lg);max-width:420px;} }
+</style>
+</head>
+<body>
+<div id="app" class="page"></div>
+<div id="toast" class="toast hidden"></div>
+
+<script>
+// ========== 数据层 ==========
+var DB = {
+  key: 'manuscript_system_v3',
+  load: function() {
+    var raw = localStorage.getItem(this.key);
+    if (raw) { try { return JSON.parse(raw); } catch(e){} }
+    var now = Date.now();
+    var data = {
+      isAdmin: false,
+      adminPassword: '20020303',
+      tasks: [
+        {
+          id:1, title:'8月品牌稿',
+          topic:'夏季品牌活动推广稿件，突出产品清凉感与年轻化调性',
+          status:'open', deadline: now+86400000*5, createdAt: now-86400000*2,
+          targetReads: 10000, targetInteractions: 500
+        },
+        {
+          id:2, title:'8月产品稿',
+          topic:'新品上市稿件，围绕核心卖点撰写',
+          status:'open', deadline: now+86400000*3, createdAt: now-86400000,
+          targetReads: 5000, targetInteractions: 300
+        }
+      ],
+      registrations: [
+        { id:1, taskId:1, name:'张三', phone:'138****8888', remark:'', followers:12000, isCompleted:true, completedAt: now-86400000, registeredAt: now-86400000*2 },
+        { id:2, taskId:1, name:'李四', phone:'139****6666', remark:'想写评测方向', followers:8500, isCompleted:false, completedAt:null, registeredAt: now-86400000 },
+        { id:3, taskId:1, name:'张三', phone:'', remark:'第二次报名', followers:12000, isCompleted:false, completedAt:null, registeredAt: now-3600000 },
+        { id:4, taskId:2, name:'王五', phone:'137****5555', remark:'', followers:56000, isCompleted:false, completedAt:null, registeredAt: now-7200000 },
+        { id:5, taskId:2, name:'张三', phone:'', remark:'', followers:12000, isCompleted:true, completedAt: now-3600000*2, registeredAt: now-3600000*3 },
+      ],
+      members: [
+        { id:1, name:'张三', phone:'138****8888', level:'A' },
+        { id:2, name:'李四', phone:'139****6666', level:'B' },
+        { id:3, name:'王五', phone:'137****5555', level:'C' }
+      ],
+      nextTaskId: 3,
+      nextRegId: 6,
+      nextMemberId: 4
+    };
+    this.save(data);
+    return data;
+  },
+  save: function(data) { localStorage.setItem(this.key, JSON.stringify(data)); }
+};
+
+var data = DB.load();
+
+// ========== 工具函数 ==========
+function toast(msg, duration) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+  setTimeout(function(){ el.classList.add('hidden'); }, duration || 2000);
+}
+function formatDate(ts) {
+  if (!ts) return '-';
+  var d = new Date(ts);
+  return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
+}
+function formatDateTime(ts) {
+  if (!ts) return '-';
+  var d = new Date(ts);
+  return pad(d.getMonth()+1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+function pad(n) { return n < 10 ? '0'+n : ''+n; }
+function formatDeadline(ts) {
+  if (!ts) return '无截止';
+  var diff = ts - Date.now();
+  if (diff < 0) return '已截止';
+  var days = Math.floor(diff / 86400000);
+  var hours = Math.floor((diff % 86400000) / 3600000);
+  if (days > 0) return '剩' + days + '天' + (hours > 0 ? hours+'h' : '');
+  if (hours > 0) return '剩' + hours + '小时';
+  return '即将截止';
+}
+function formatNum(n) {
+  if (n == null || n === '') return '-';
+  n = parseInt(n);
+  if (n >= 10000) return (n / 10000).toFixed(1).replace(/\.0$/, '') + 'w';
+  if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+  return '' + n;
+}
+function getCurrentMonth() {
+  var d = new Date();
+  return d.getFullYear() + '-' + pad(d.getMonth()+1);
+}
+function escapeHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ========== 页面路由 ==========
+var currentView = 'taskList';
+var currentTab = 'taskList';
+var currentPeriod = 'month';
+
+function render() {
+  var app = document.getElementById('app');
+  var html = '';
+  html += '<div class="navbar">';
+  html += '<h1>闫佳欣组稿件报名系统</h1>';
+  if (data.isAdmin) {
+    html += '<button class="nav-btn" onclick="switchView(\'admin\')">管理后台</button>';
+  } else {
+    html += '<button class="nav-btn" onclick="showAdminLogin()">管理员</button>';
+  }
+  html += '</div>';
+  if (currentView === 'admin' && data.isAdmin) {
+    html += renderAdmin();
+  } else {
+    html += renderTabs();
+    if (currentTab === 'taskList') html += renderTaskList();
+    else if (currentTab === 'myTasks') html += renderMyTasks();
+    else if (currentTab === 'rank') html += renderRank();
+  }
+  app.innerHTML = html;
+}
+
+function renderTabs() {
+  var html = '<div class="tab-bar">';
+  html += '<div class="tab '+(currentTab==='taskList'?'active':'')+'" onclick="switchTab(\'taskList\')">任务大厅</div>';
+  html += '<div class="tab '+(currentTab==='myTasks'?'active':'')+'" onclick="switchTab(\'myTasks\')">我的稿件</div>';
+  html += '<div class="tab '+(currentTab==='rank'?'active':'')+'" onclick="switchTab(\'rank\')">排行榜</div>';
+  html += '</div>';
+  return html;
+}
+
+// ========== 质量指标渲染 ==========
+function renderQualityTags(task) {
+  var html = '<div class="quality-bar">';
+  if (task.targetReads) html += '<span class="quality-tag qt-reads">阅读 '+formatNum(task.targetReads)+'</span>';
+  if (task.targetInteractions) html += '<span class="quality-tag qt-interactions">互动 '+formatNum(task.targetInteractions)+'</span>';
+  html += '</div>';
+  return html;
+}
+
+// ========== 任务大厅 ==========
+function renderTaskList() {
+  var openTasks = data.tasks.filter(function(t){ return t.status === 'open'; });
+  if (openTasks.length === 0) {
+    return '<div class="empty"><div class="empty-icon">📭</div><div class="empty-text">暂无可报名的任务</div><div class="empty-sub">敬请期待新任务发布</div></div>';
+  }
+  var html = '';
+  openTasks.forEach(function(task) {
+    var regs = data.registrations.filter(function(r){ return r.taskId === task.id; });
+    html += '<div class="task-card" onclick="showTaskDetail('+task.id+')">';
+    html += '<div class="tc-header"><div class="tc-title">'+escapeHtml(task.title)+'</div></div>';
+    html += '<div class="tc-topic">'+escapeHtml(task.topic)+'</div>';
+    html += renderQualityTags(task);
+    // 底部一行：报名中 | 剩余时间 | 报名人数 | 报名按钮
+    html += '<div class="tc-row">';
+    html += '<span class="tc-status status-open">报名中</span>';
+    // 剩余时间
+    if (task.deadline) {
+      var diff = task.deadline - Date.now();
+      if (diff > 0) {
+        var days = Math.floor(diff / 86400000);
+        var hours = Math.floor((diff % 86400000) / 3600000);
+        var deadlineText = days > 0 ? '剩' + days + '天' + (hours > 0 ? hours + 'h' : '') : hours > 0 ? '剩' + hours + 'h' : '即将截止';
+        var deadlineClass = days < 1 ? 'tc-tag tc-tag-urgent' : 'tc-tag tc-tag-deadline';
+        html += '<span class="'+deadlineClass+'">📅 '+deadlineText+'</span>';
+      } else {
+        html += '<span class="tc-tag">已截止</span>';
+      }
+    }
+    html += '<span class="tc-tag">👥 '+regs.length+'人</span>';
+    html += '<button class="btn btn-primary btn-sm tc-btn" onclick="event.stopPropagation();showRegForm('+task.id+')">报名</button>';
+    html += '</div>';
+    html += '</div>';
+  });
+  return html;
+}
+
+// 任务详情
+function showTaskDetail(taskId) {
+  var task = data.tasks.find(function(t){ return t.id === taskId; });
+  if (!task) return;
+  var regs = data.registrations.filter(function(r){ return r.taskId === taskId; });
+  var completedCount = regs.filter(function(r){ return r.isCompleted; }).length;
+
+  var html = '<div class="modal-mask" onclick="closeModal(event)">';
+  html += '<div class="modal" onclick="event.stopPropagation()">';
+  html += '<div class="modal-head"><span>任务详情</span><button class="close" onclick="closeModal()">&times;</button></div>';
+  html += '<div class="modal-body">';
+  html += '<div style="margin-bottom:12px;"><b style="font-size:16px;">'+escapeHtml(task.title)+'</b></div>';
+  html += '<div style="background:var(--gray-1);padding:10px;border-radius:6px;margin-bottom:12px;font-size:13px;color:var(--text-2);line-height:1.6;">'+escapeHtml(task.topic)+'</div>';
+
+  // 质量指标
+  if (task.targetReads || task.targetInteractions) {
+    html += '<div style="background:var(--primary-light);padding:10px;border-radius:6px;margin-bottom:12px;">';
+    html += '<div style="font-size:12px;color:var(--primary);font-weight:600;margin-bottom:6px;">质量指标</div>';
+    if (task.targetReads) html += '<div style="font-size:13px;color:var(--text-2);">目标阅读量：<b style="color:var(--primary);">'+task.targetReads.toLocaleString()+'</b></div>';
+    if (task.targetInteractions) html += '<div style="font-size:13px;color:var(--text-2);">目标互动量：<b style="color:var(--primary);">'+task.targetInteractions.toLocaleString()+'</b></div>';
+    html += '</div>';
+  }
+
+  html += '<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">';
+  // 报名状态标签（醒目）
+  var statusClass = task.status==='open' ? 'badge-status-open' : task.status==='closed' ? 'badge-status-closed' : 'badge-done';
+  var statusText = task.status==='open' ? '报名中' : task.status==='closed' ? '已截止' : '已归档';
+  html += '<span class="'+statusClass+'">'+statusText+'</span>';
+  // 剩余时间标签（醒目）
+  if (task.status === 'open' && task.deadline) {
+    var diff = task.deadline - Date.now();
+    if (diff > 0) {
+      var days = Math.floor(diff / 86400000);
+      var hours = Math.floor((diff % 86400000) / 3600000);
+      var deadlineText = days > 0 ? '剩' + days + '天' + (hours > 0 ? hours + 'h' : '') : hours > 0 ? '剩' + hours + '小时' : '即将截止';
+      var deadlineClass = days < 1 ? 'badge-deadline-urgent' : 'badge-deadline';
+      html += '<span class="'+deadlineClass+'">📅 '+deadlineText+'</span>';
+    } else {
+      html += '<span class="badge-status-closed">📅 已截止</span>';
+    }
+  }
+  html += '<span class="badge badge-count">👥 '+regs.length+'人报名</span>';
+  html += '<span class="badge badge-count">✅ '+completedCount+'人完成</span>';
+  html += '</div>';
+
+  if (regs.length > 0) {
+    html += '<div style="margin-top:16px;font-size:13px;font-weight:600;color:var(--text-2);margin-bottom:6px;">报名名单</div>';
+    if (regs.length > 3) html += '<div class="reg-scroll">';
+    else html += '<div>';
+    regs.forEach(function(r) {
+      html += '<div class="reg-item">';
+      html += '<div class="reg-name">'+escapeHtml(r.name)+'</div>';
+      if (r.followers) html += '<div class="reg-followers">粉丝 '+formatNum(r.followers)+'</div>';
+      html += '<div class="reg-status '+(r.isCompleted?'badge-done':'badge-open')+'">'+(r.isCompleted?'已完成':'待完成')+'</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+    if (regs.length > 3) html += '<div class="reg-scroll-hint">向下滚动查看全部 '+regs.length+' 人</div>';
+  }
+  html += '</div>';
+  html += '<div class="modal-foot">';
+  if (task.status === 'open') {
+    html += '<button class="btn btn-primary btn-block" onclick="closeModal();showRegForm('+task.id+')">立即报名</button>';
+  } else {
+    html += '<button class="btn btn-outline btn-block" onclick="closeModal()">关闭</button>';
+  }
+  html += '</div>';
+  html += '</div></div>';
+  showModal(html);
+}
+
+// 报名表单
+function showRegForm(taskId) {
+  var task = data.tasks.find(function(t){ return t.id === taskId; });
+  if (!task) return;
+  // 读取上次填的姓名
+  var lastName = localStorage.getItem('my_name') || '';
+  var html = '<div class="modal-mask" onclick="closeModal(event)">';
+  html += '<div class="modal" onclick="event.stopPropagation()">';
+  html += '<div class="modal-head"><span>报名：'+escapeHtml(task.title)+'</span><button class="close" onclick="closeModal()">&times;</button></div>';
+  html += '<div class="modal-body">';
+  html += '<div style="background:var(--gray-1);padding:10px;border-radius:6px;margin-bottom:14px;font-size:13px;color:var(--text-2);">稿件主题：'+escapeHtml(task.topic)+'</div>';
+
+  // 质量指标提示
+  if (task.targetReads || task.targetInteractions) {
+    html += '<div style="background:var(--primary-light);padding:8px 10px;border-radius:6px;margin-bottom:14px;font-size:12px;color:var(--primary);">';
+    if (task.targetReads) html += '目标阅读量：'+task.targetReads.toLocaleString()+'　';
+    if (task.targetInteractions) html += '目标互动量：'+task.targetInteractions.toLocaleString();
+    html += '</div>';
+  }
+
+  html += '<div class="form-group"><label>姓名 <span class="req">*</span></label><input id="regName" type="text" placeholder="请输入你的姓名" maxlength="20" value="'+escapeHtml(lastName)+'"></div>';
+  html += '<div class="form-group"><label>账号粉丝数 <span class="req">*</span></label><input id="regFollowers" type="number" placeholder="请输入你的账号粉丝数" min="0"></div>';
+  html += '<div class="form-group"><label>手机号（选填）</label><input id="regPhone" type="tel" placeholder="选填，方便群主联系" maxlength="20"></div>';
+  html += '<div class="form-group"><label>备注（选填）</label><textarea id="regRemark" placeholder="如稿件方向意向" maxlength="200"></textarea></div>';
+  html += '<p style="font-size:11px;color:var(--text-3);">一个人可以多次报名同一任务，每次报名需填写完整信息</p>';
+  html += '</div>';
+  html += '<div class="modal-foot">';
+  html += '<button class="btn btn-outline" style="flex:1;" onclick="closeModal()">取消</button>';
+  html += '<button class="btn btn-primary" style="flex:2;" onclick="submitReg('+task.id+')">确认报名</button>';
+  html += '</div>';
+  html += '</div></div>';
+  showModal(html);
+}
+
+function submitReg(taskId) {
+  var name = document.getElementById('regName').value.trim();
+  var followers = document.getElementById('regFollowers').value.trim();
+  var phone = document.getElementById('regPhone').value.trim();
+  var remark = document.getElementById('regRemark').value.trim();
+  if (!name) { toast('请输入姓名'); return; }
+  if (!followers || parseInt(followers) < 0) { toast('请输入账号粉丝数'); return; }
+
+  data.registrations.push({
+    id: data.nextRegId++,
+    taskId: taskId,
+    name: name,
+    phone: phone,
+    remark: remark,
+    followers: parseInt(followers),
+    isCompleted: false,
+    completedAt: null,
+    registeredAt: Date.now()
+  });
+  DB.save(data);
+  // 记住姓名
+  localStorage.setItem('my_name', name);
+  closeModal();
+  toast('报名成功！');
+  render();
+}
+
+// ========== 我的稿件 ==========
+function renderMyTasks() {
+  var myName = localStorage.getItem('my_name') || '';
+  if (!myName) {
+    var html = '<div class="card">';
+    html += '<div class="form-group"><label>请输入你的姓名</label><input id="myNameInput" type="text" placeholder="输入姓名查看你的稿件" maxlength="20"></div>';
+    html += '<button class="btn btn-primary btn-block" onclick="saveMyName()">确认</button>';
+    html += '<p style="font-size:12px;color:var(--text-3);margin-top:10px;text-align:center;">输入你报名时用的姓名，系统会按姓名聚合你的稿件记录</p>';
+    html += '</div>';
+    return html;
+  }
+
+  var myRegs = data.registrations.filter(function(r){ return r.name === myName; });
+  var html = '<div class="card" style="display:flex;align-items:center;justify-content:space-between;">';
+  html += '<div><div style="font-size:15px;font-weight:600;">'+escapeHtml(myName)+'</div>';
+  html += '<div style="font-size:12px;color:var(--text-3);">共报名'+myRegs.length+'篇，已完成'+myRegs.filter(function(r){return r.isCompleted;}).length+'篇</div></div>';
+  html += '<button class="btn btn-outline btn-sm" onclick="localStorage.removeItem(\'my_name\');render();">切换</button>';
+  html += '</div>';
+
+  if (myRegs.length === 0) {
+    html += '<div class="empty"><div class="empty-icon">📝</div><div class="empty-text">还没有报名稿件</div><div class="empty-sub">去任务大厅报名吧</div></div>';
+  } else {
+    myRegs.sort(function(a,b){ return (b.registeredAt||0) - (a.registeredAt||0); });
+    myRegs.forEach(function(reg) {
+      var task = data.tasks.find(function(t){ return t.id === reg.taskId; });
+      if (!task) return;
+      html += '<div class="task-card">';
+      html += '<div class="tc-header"><div class="tc-title">'+escapeHtml(task.title)+'</div>';
+      html += '<span class="badge '+(reg.isCompleted?'badge-done':'badge-open')+'">'+(reg.isCompleted?'已完成':'待完成')+'</span></div>';
+      html += '<div class="tc-topic">'+escapeHtml(task.topic)+'</div>';
+      html += '<div class="tc-row">';
+      html += '<span class="tc-tag">🕐 '+formatDateTime(reg.registeredAt)+'</span>';
+      if (reg.followers) html += '<span class="tc-tag" style="color:var(--success);">👥 '+formatNum(reg.followers)+'</span>';
+      if (reg.isCompleted) html += '<span class="tc-tag">✅ '+formatDate(reg.completedAt)+'</span>';
+      if (reg.remark) html += '<span class="tc-tag">💬 '+escapeHtml(reg.remark)+'</span>';
+      html += '</div>';
+      // 质量指标
+      if (task.targetReads || task.targetInteractions) {
+        html += renderQualityTags(task);
+      }
+      html += '</div>';
+    });
+  }
+  return html;
+}
+
+function saveMyName() {
+  var name = document.getElementById('myNameInput').value.trim();
+  if (!name) { toast('请输入姓名'); return; }
+  localStorage.setItem('my_name', name);
+  render();
+}
+
+// ========== 排行榜 ==========
+function renderRank() {
+  var html = '<div class="period-tabs">';
+  html += '<div class="pt '+(currentPeriod==='month'?'active':'')+'" onclick="switchPeriod(\'month\')">本月</div>';
+  html += '<div class="pt '+(currentPeriod==='quarter'?'active':'')+'" onclick="switchPeriod(\'quarter\')">本季度</div>';
+  html += '<div class="pt '+(currentPeriod==='year'?'active':'')+'" onclick="switchPeriod(\'year\')">本年度</div>';
+  html += '<div class="pt '+(currentPeriod==='all'?'active':'')+'" onclick="switchPeriod(\'all\')">全部</div>';
+  html += '</div>';
+
+  var stats = calcRankStats(currentPeriod);
+  var list = stats.list;
+
+  html += '<div class="stat-grid">';
+  html += '<div class="stat-card"><div class="stat-num">'+stats.totalCompleted+'</div><div class="stat-label">总完成稿件数</div></div>';
+  html += '<div class="stat-card success"><div class="stat-num">'+stats.activeMembers+'</div><div class="stat-label">参与人数</div></div>';
+  html += '</div>';
+
+  if (list.length === 0) {
+    html += '<div class="empty"><div class="empty-icon">📊</div><div class="empty-text">暂无排名数据</div><div class="empty-sub">完成稿件后自动上榜</div></div>';
+  } else {
+    html += '<div class="rank-list">';
+    list.forEach(function(item, idx) {
+      var rankClass = idx === 0 ? 'r1' : idx === 1 ? 'r2' : idx === 2 ? 'r3' : 'rn';
+      html += '<div class="rank-item">';
+      html += '<div class="rank-num '+rankClass+'">'+(idx+1)+'</div>';
+      html += '<div class="rank-info">';
+      html += '<div class="rank-name">'+escapeHtml(item.name);
+      // 显示成员等级
+      var member = (data.members||[]).find(function(m){ return m.name === item.name; });
+      if (member && member.level) {
+        html += ' <span class="level-badge level-'+member.level+'">'+member.level+'</span>';
+      }
+      html += '</div>';
+      html += '<div class="rank-detail">完成'+item.count+'篇稿件 · 总粉丝 '+formatNum(item.totalFollowers)+(item.firstCompletedAt ? ' · 首篇完成 '+formatDate(item.firstCompletedAt) : '')+'</div>';
+      html += '</div>';
+      html += '<div class="rank-score">'+item.count+'<span>篇</span></div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+  return html;
+}
+
+function calcRankStats(period) {
+  var now = new Date();
+  var curYear = now.getFullYear();
+  var curMonth = now.getMonth();
+  var curQuarter = Math.floor(curMonth / 3);
+
+  var completed = data.registrations.filter(function(r) {
+    if (!r.isCompleted || !r.completedAt) return false;
+    if (period === 'all') return true;
+    var d = new Date(r.completedAt);
+    if (period === 'month') return d.getFullYear() === curYear && d.getMonth() === curMonth;
+    if (period === 'quarter') {
+      var q = Math.floor(d.getMonth() / 3);
+      return d.getFullYear() === curYear && q === curQuarter;
+    }
+    if (period === 'year') return d.getFullYear() === curYear;
+    return true;
+  });
+
+  var map = {};
+  completed.forEach(function(r) {
+    if (!map[r.name]) map[r.name] = { name: r.name, count: 0, firstCompletedAt: null, totalFollowers: 0 };
+    map[r.name].count++;
+    if (r.followers) map[r.name].totalFollowers = r.followers;
+    if (!map[r.name].firstCompletedAt || r.completedAt < map[r.name].firstCompletedAt) {
+      map[r.name].firstCompletedAt = r.completedAt;
+    }
+  });
+
+  var list = Object.values(map);
+  list.sort(function(a, b) {
+    if (b.count !== a.count) return b.count - a.count;
+    return (a.firstCompletedAt || 0) - (b.firstCompletedAt || 0);
+  });
+
+  return {
+    list: list,
+    totalCompleted: completed.length,
+    activeMembers: list.length
+  };
+}
+
+// ========== 管理端 ==========
+function renderAdmin() {
+  var html = '<div class="tab-bar">';
+  html += '<div class="tab '+(currentTab==='adminTasks'?'active':'')+'" onclick="switchTab(\'adminTasks\')">任务管理</div>';
+  html += '<div class="tab '+(currentTab==='adminRegs'?'active':'')+'" onclick="switchTab(\'adminRegs\')">报名审核</div>';
+  html += '<div class="tab '+(currentTab==='adminMembers'?'active':'')+'" onclick="switchTab(\'adminMembers\')">团队成员</div>';
+  html += '<div class="tab '+(currentTab==='adminStats'?'active':'')+'" onclick="switchTab(\'adminStats\')">月度统计</div>';
+  html += '</div>';
+  if (currentTab === 'adminTasks') html += renderAdminTasks();
+  else if (currentTab === 'adminRegs') html += renderAdminRegs();
+  else if (currentTab === 'adminMembers') html += renderAdminMembers();
+  else if (currentTab === 'adminStats') html += renderAdminStats();
+  return html;
+}
+
+// 管理端-任务管理
+function renderAdminTasks() {
+  var html = '<button class="btn btn-primary btn-block" style="margin:12px;" onclick="showTaskForm()">+ 发布新任务</button>';
+  if (data.tasks.length === 0) {
+    return html + '<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">还没有任务</div></div>';
+  }
+  data.tasks.forEach(function(task) {
+    var regs = data.registrations.filter(function(r){ return r.taskId === task.id; });
+    var completedCount = regs.filter(function(r){ return r.isCompleted; }).length;
+    html += '<div class="task-card">';
+    html += '<div class="tc-header"><div class="tc-title">'+escapeHtml(task.title)+'</div>';
+    html += '<span class="badge '+(task.status==='open'?'badge-open':task.status==='closed'?'badge-closed':'badge-done')+'">'+(task.status==='open'?'报名中':task.status==='closed'?'已截止':'已归档')+'</span></div>';
+    html += '<div class="tc-topic">'+escapeHtml(task.topic)+'</div>';
+    html += renderQualityTags(task);
+    // 底部一行：状态 | 剩余时间 | 报名人数 | 完成人数 | 操作按钮
+    html += '<div class="tc-row">';
+    // 截止时间标签
+    if (task.status === 'open' && task.deadline) {
+      var diff = task.deadline - Date.now();
+      if (diff > 0) {
+        var days = Math.floor(diff / 86400000);
+        var hours = Math.floor((diff % 86400000) / 3600000);
+        var deadlineText = days > 0 ? '剩' + days + '天' + (hours > 0 ? hours + 'h' : '') : hours > 0 ? '剩' + hours + 'h' : '即将截止';
+        var deadlineClass = days < 1 ? 'tc-tag tc-tag-urgent' : 'tc-tag tc-tag-deadline';
+        html += '<span class="'+deadlineClass+'">📅 '+deadlineText+'</span>';
+      } else {
+        html += '<span class="tc-tag">已截止</span>';
+      }
+    }
+    html += '<span class="tc-tag">👥 '+regs.length+'人</span>';
+    html += '<span class="tc-tag">✅ '+completedCount+'完成</span>';
+    html += '<div style="margin-left:auto;display:flex;gap:4px;">';
+    if (task.status === 'open') {
+      html += '<button class="btn btn-outline btn-sm" onclick="closeTask('+task.id+')">截止</button>';
+    }
+    html += '<button class="btn btn-outline btn-sm" onclick="showTaskForm('+task.id+')">编辑</button>';
+    html += '<button class="btn btn-success btn-sm" onclick="exportTaskRegs('+task.id+')">导出</button>';
+    html += '<button class="btn btn-danger btn-sm" onclick="deleteTask('+task.id+')">删除</button>';
+    html += '</div>';
+    html += '</div>';
+    html += '</div>';
+  });
+  return html;
+}
+
+// 发布/编辑任务
+function showTaskForm(taskId) {
+  var task = taskId ? data.tasks.find(function(t){ return t.id === taskId; }) : null;
+  var title = task ? task.title : '';
+  var topic = task ? task.topic : '';
+  var deadline = task && task.deadline ? new Date(task.deadline).toISOString().slice(0,16) : '';
+  var targetReads = task && task.targetReads ? task.targetReads : '';
+  var targetInteractions = task && task.targetInteractions ? task.targetInteractions : '';
+
+  var html = '<div class="modal-mask" onclick="closeModal(event)">';
+  html += '<div class="modal" onclick="event.stopPropagation()">';
+  html += '<div class="modal-head"><span>'+(task?'编辑任务':'发布新任务')+'</span><button class="close" onclick="closeModal()">&times;</button></div>';
+  html += '<div class="modal-body">';
+  html += '<div class="form-group"><label>项目名称 <span class="req">*</span></label><input id="taskTitle" type="text" placeholder="如：8月品牌稿" maxlength="100" value="'+escapeHtml(title)+'"></div>';
+  html += '<div class="form-group"><label>稿件主题 <span class="req">*</span></label><textarea id="taskTopic" placeholder="描述稿件主题、要求等" maxlength="500">'+escapeHtml(topic)+'</textarea></div>';
+  html += '<div class="form-group"><label>报名截止时间</label><input id="taskDeadline" type="datetime-local" value="'+deadline+'"></div>';
+  // 质量指标
+  html += '<div style="background:var(--primary-light);padding:10px;border-radius:6px;margin-bottom:14px;">';
+  html += '<div style="font-size:13px;font-weight:600;color:var(--primary);margin-bottom:10px;">质量指标设置</div>';
+  html += '<div class="form-row">';
+  html += '<div class="form-group" style="margin-bottom:0;"><label>目标阅读量</label><input id="taskReads" type="number" placeholder="如 10000" min="0" value="'+targetReads+'"></div>';
+  html += '<div class="form-group" style="margin-bottom:0;"><label>目标互动量</label><input id="taskInteractions" type="number" placeholder="如 500" min="0" value="'+targetInteractions+'"></div>';
+  html += '</div>';
+  html += '<div class="hint">设置后成员报名时可见，作为稿件质量评估标准</div>';
+  html += '</div>';
+  html += '</div>';
+  html += '<div class="modal-foot">';
+  html += '<button class="btn btn-outline" style="flex:1;" onclick="closeModal()">取消</button>';
+  html += '<button class="btn btn-primary" style="flex:2;" onclick="saveTask('+(taskId||0)+')">'+(task?'保存修改':'发布')+'</button>';
+  html += '</div>';
+  html += '</div></div>';
+  showModal(html);
+}
+
+function saveTask(taskId) {
+  var title = document.getElementById('taskTitle').value.trim();
+  var topic = document.getElementById('taskTopic').value.trim();
+  var deadlineStr = document.getElementById('taskDeadline').value;
+  var reads = document.getElementById('taskReads').value;
+  var interactions = document.getElementById('taskInteractions').value;
+  if (!title) { toast('请输入项目名称'); return; }
+  if (!topic) { toast('请输入稿件主题'); return; }
+  var deadlineTs = deadlineStr ? new Date(deadlineStr).getTime() : null;
+  var targetReads = reads ? parseInt(reads) : null;
+  var targetInteractions = interactions ? parseInt(interactions) : null;
+
+  if (taskId) {
+    var task = data.tasks.find(function(t){ return t.id === taskId; });
+    if (task) {
+      task.title = title;
+      task.topic = topic;
+      task.deadline = deadlineTs;
+      task.targetReads = targetReads;
+      task.targetInteractions = targetInteractions;
+    }
+    toast('修改成功');
+  } else {
+    data.tasks.push({
+      id: data.nextTaskId++,
+      title: title,
+      topic: topic,
+      status: 'open',
+      deadline: deadlineTs,
+      createdAt: Date.now(),
+      targetReads: targetReads,
+      targetInteractions: targetInteractions
+    });
+    toast('发布成功');
+  }
+  DB.save(data);
+  closeModal();
+  render();
+}
+
+function closeTask(taskId) {
+  var task = data.tasks.find(function(t){ return t.id === taskId; });
+  if (task) {
+    task.status = 'closed';
+    DB.save(data);
+    toast('已截止报名');
+    render();
+  }
+}
+
+function deleteTask(taskId) {
+  if (!confirm('确定删除这个任务吗？相关的报名记录也会被删除。')) return;
+  data.tasks = data.tasks.filter(function(t){ return t.id !== taskId; });
+  data.registrations = data.registrations.filter(function(r){ return r.taskId !== taskId; });
+  DB.save(data);
+  toast('已删除');
+  render();
+}
+
+// 导出单个任务的报名名单
+function exportTaskRegs(taskId) {
+  var task = data.tasks.find(function(t){ return t.id === taskId; });
+  if (!task) { toast('任务不存在'); return; }
+  var regs = data.registrations.filter(function(r){ return r.taskId === taskId; });
+  if (regs.length === 0) { toast('该任务暂无报名记录'); return; }
+
+  // 按报名时间排序
+  regs.sort(function(a, b) { return (a.registeredAt || 0) - (b.registeredAt || 0); });
+
+  var csv = '\ufeff序号,姓名,账号粉丝数,手机号,备注,报名状态,完成状态,报名时间,完成时间\n';
+  regs.forEach(function(r, idx) {
+    var row = [
+      idx + 1,
+      r.name || '',
+      r.followers || 0,
+      r.phone || '',
+      (r.remark || '').replace(/,/g, '，'),
+      r.isCompleted ? '已完成' : '待完成',
+      r.isCompleted ? formatDate(r.completedAt) : '-',
+      formatDateTime(r.registeredAt),
+      r.isCompleted ? formatDate(r.completedAt) : '-'
+    ];
+    csv += row.join(',') + '\n';
+  });
+
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  var link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = escapeHtml(task.title) + '_报名名单_' + formatDate(Date.now()) + '.csv';
+  link.click();
+  toast('已导出 ' + regs.length + ' 条报名记录');
+}
+
+// 管理端-团队成员
+function renderAdminMembers() {
+  var members = data.members || [];
+  var levelCounts = { A:0, B:0, C:0 };
+  members.forEach(function(m) {
+    if (m.level && levelCounts[m.level] !== undefined) levelCounts[m.level]++;
+  });
+
+  var html = '';
+  // 统计栏
+  html += '<div class="member-stat">';
+  html += '<div class="ms-item"><div class="ms-num">'+members.length+'</div><div class="ms-label">总人数</div></div>';
+  html += '<div class="ms-item"><div class="ms-num" style="color:var(--danger);">'+levelCounts.A+'</div><div class="ms-label">A级</div></div>';
+  html += '<div class="ms-item"><div class="ms-num" style="color:var(--warning);">'+levelCounts.B+'</div><div class="ms-label">B级</div></div>';
+  html += '<div class="ms-item"><div class="ms-num" style="color:var(--text-2);">'+levelCounts.C+'</div><div class="ms-label">C级</div></div>';
+  html += '</div>';
+
+  // 操作按钮
+  html += '<div style="display:flex;gap:8px;padding:12px;">';
+  html += '<button class="btn btn-primary" style="flex:1;" onclick="showMemberForm()">+ 添加成员</button>';
+  html += '<button class="btn btn-outline" style="flex:1;" onclick="showImportModal()">批量导入</button>';
+  html += '<button class="btn btn-success" style="flex:0 0 auto;" onclick="exportMembers()">导出</button>';
+  html += '</div>';
+
+  // 成员列表
+  if (members.length === 0) {
+    html += '<div class="empty"><div class="empty-icon">👥</div><div class="empty-text">暂无团队成员</div><div class="empty-sub">点击添加或导入成员</div></div>';
+    return html;
+  }
+
+  // 按等级排序 A>B>C
+  var sorted = members.slice().sort(function(a,b) {
+    var order = { A:0, B:1, C:2 };
+    var oa = order[a.level] !== undefined ? order[a.level] : 3;
+    var ob = order[b.level] !== undefined ? order[b.level] : 3;
+    if (oa !== ob) return oa - ob;
+    return (a.name||'').localeCompare(b.name||'');
+  });
+
+  sorted.forEach(function(m) {
+    var level = m.level || 'C';
+    var levelClass = 'level-' + level;
+    html += '<div class="member-card">';
+    html += '<div class="mc-avatar">'+escapeHtml((m.name||'?').charAt(0))+'</div>';
+    html += '<div class="mc-info">';
+    html += '<div class="mc-name">'+escapeHtml(m.name||'')+' <span class="level-badge '+levelClass+'">'+level+'</span></div>';
+    if (m.phone) {
+      html += '<div class="mc-phone">'+escapeHtml(m.phone)+'</div>';
+    } else {
+      html += '<div class="mc-phone" style="color:var(--text-3);">未填写手机号</div>';
+    }
+    html += '</div>';
+    html += '<div class="mc-actions">';
+    html += '<button class="btn btn-outline btn-sm" onclick="showMemberForm('+m.id+')">编辑</button>';
+    html += '<button class="btn btn-danger btn-sm" onclick="deleteMember('+m.id+')">删除</button>';
+    html += '</div>';
+    html += '</div>';
+  });
+  return html;
+}
+
+// 添加/编辑成员
+function showMemberForm(memberId) {
+  var m = memberId ? (data.members||[]).find(function(x){ return x.id === memberId; }) : null;
+  var name = m ? (m.name||'') : '';
+  var phone = m ? (m.phone||'') : '';
+  var level = m ? (m.level||'C') : 'C';
+
+  var html = '<div class="modal-mask" onclick="closeModal(event)">';
+  html += '<div class="modal" onclick="event.stopPropagation()">';
+  html += '<div class="modal-head"><span>'+(m?'编辑成员':'添加成员')+'</span><button class="close" onclick="closeModal()">&times;</button></div>';
+  html += '<div class="modal-body">';
+  html += '<div class="form-group"><label>姓名 <span class="req">*</span></label><input id="memberName" type="text" placeholder="请输入姓名" maxlength="20" value="'+escapeHtml(name)+'"></div>';
+  html += '<div class="form-group"><label>手机号</label><input id="memberPhone" type="tel" placeholder="请输入手机号" maxlength="20" value="'+escapeHtml(phone)+'"></div>';
+  html += '<div class="form-group"><label>等级</label>';
+  html += '<div style="display:flex;gap:8px;">';
+  ['A','B','C'].forEach(function(lv) {
+    html += '<label style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:10px;border:1px solid var(--gray-2);border-radius:var(--radius-sm);cursor:pointer;font-size:14px;font-weight:600;" onclick="selectLevel(\''+lv+'\')" id="levelLabel_'+lv+'">';
+    html += '<span class="level-badge level-'+lv+'">'+lv+'</span> '+lv+'级';
+    html += '</label>';
+  });
+  html += '</div>';
+  html += '<input type="hidden" id="memberLevel" value="'+level+'">';
+  html += '</div>';
+  html += '</div>';
+  html += '<div class="modal-foot">';
+  html += '<button class="btn btn-outline" style="flex:1;" onclick="closeModal()">取消</button>';
+  html += '<button class="btn btn-primary" style="flex:2;" onclick="saveMember('+(memberId||0)+')">'+(m?'保存':'添加')+'</button>';
+  html += '</div>';
+  html += '</div></div>';
+  showModal(html);
+  // 高亮当前等级
+  selectLevel(level);
+}
+
+function selectLevel(lv) {
+  document.getElementById('memberLevel').value = lv;
+  ['A','B','C'].forEach(function(l) {
+    var el = document.getElementById('levelLabel_'+l);
+    if (el) {
+      if (l === lv) {
+        el.style.borderColor = 'var(--primary)';
+        el.style.background = 'var(--primary-light)';
+        el.style.color = 'var(--primary)';
+      } else {
+        el.style.borderColor = 'var(--gray-2)';
+        el.style.background = '#fff';
+        el.style.color = 'var(--text-1)';
+      }
+    }
+  });
+}
+
+function saveMember(memberId) {
+  var name = document.getElementById('memberName').value.trim();
+  var phone = document.getElementById('memberPhone').value.trim();
+  var level = document.getElementById('memberLevel').value || 'C';
+  if (!name) { toast('请输入姓名'); return; }
+  if (!['A','B','C'].includes(level)) level = 'C';
+
+  if (!data.members) data.members = [];
+
+  if (memberId) {
+    var m = data.members.find(function(x){ return x.id === memberId; });
+    if (m) {
+      m.name = name; m.phone = phone; m.level = level;
+    }
+    toast('修改成功');
+  } else {
+    if (!data.nextMemberId) data.nextMemberId = 1;
+    data.members.push({ id: data.nextMemberId++, name: name, phone: phone, level: level });
+    toast('添加成功');
+  }
+  DB.save(data);
+  closeModal();
+  render();
+}
+
+function deleteMember(memberId) {
+  if (!confirm('确定删除该成员吗？')) return;
+  data.members = (data.members||[]).filter(function(m){ return m.id !== memberId; });
+  DB.save(data);
+  toast('已删除');
+  render();
+}
+
+// 批量导入
+function showImportModal() {
+  var html = '<div class="modal-mask" onclick="closeModal(event)">';
+  html += '<div class="modal" onclick="event.stopPropagation()">';
+  html += '<div class="modal-head"><span>批量导入成员</span><button class="close" onclick="closeModal()">&times;</button></div>';
+  html += '<div class="modal-body">';
+  html += '<div style="background:var(--primary-light);padding:10px;border-radius:6px;margin-bottom:14px;font-size:12px;color:var(--primary);line-height:1.6;">';
+  html += '<b>导入格式说明：</b><br>';
+  html += '每行一条记录，字段间用逗号分隔：<br>';
+  html += '<b>姓名,手机号,等级</b><br>';
+  html += '等级可选：A、B、C（不填默认C）<br>';
+  html += '<b>示例：</b><br>';
+  html += '张三,13800001111,A<br>';
+  html += '李四,13800002222,B<br>';
+  html += '王五,13800003333,C';
+  html += '</div>';
+  html += '<div class="form-group"><label>粘贴数据</label><textarea id="importData" placeholder="张三,13800001111,A&#10;李四,13800002222,B&#10;王五,13800003333,C" style="min-height:120px;font-family:monospace;font-size:13px;"></textarea></div>';
+  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">';
+  html += '<input type="file" id="importFile" accept=".csv,.txt" style="font-size:12px;">';
+  html += '<button class="btn btn-outline btn-sm" onclick="parseImportFile()">读取文件</button>';
+  html += '</div>';
+  html += '<div id="importPreview" style="font-size:12px;color:var(--text-3);"></div>';
+  html += '</div>';
+  html += '<div class="modal-foot">';
+  html += '<button class="btn btn-outline" style="flex:1;" onclick="closeModal()">取消</button>';
+  html += '<button class="btn btn-primary" style="flex:2;" onclick="doImportMembers()">导入</button>';
+  html += '</div>';
+  html += '</div></div>';
+  showModal(html);
+}
+
+function parseImportFile() {
+  var fileInput = document.getElementById('importFile');
+  if (!fileInput.files || !fileInput.files[0]) { toast('请选择文件'); return; }
+  var file = fileInput.files[0];
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var text = e.target.result;
+    document.getElementById('importData').value = text;
+    toast('文件已读取');
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function doImportMembers() {
+  var text = document.getElementById('importData').value.trim();
+  if (!text) { toast('请输入或导入数据'); return; }
+
+  var lines = text.split(/\r?\n/);
+  var success = 0, fail = 0;
+  if (!data.members) data.members = [];
+  if (!data.nextMemberId) data.nextMemberId = 1;
+
+  lines.forEach(function(line) {
+    line = line.trim();
+    if (!line) return;
+    // 跳过表头
+    if (/^姓[名,]/.test(line) || /^姓名/.test(line)) return;
+
+    var parts = line.split(/[,，\t]/);
+    var name = (parts[0]||'').trim();
+    var phone = (parts[1]||'').trim();
+    var level = (parts[2]||'C').trim().toUpperCase();
+
+    if (!name) { fail++; return; }
+    if (!['A','B','C'].includes(level)) level = 'C';
+
+    data.members.push({
+      id: data.nextMemberId++,
+      name: name,
+      phone: phone,
+      level: level
+    });
+    success++;
+  });
+
+  if (success > 0) {
+    DB.save(data);
+    toast('成功导入 '+success+' 条'+(fail>0?'，失败 '+fail+' 条':''));
+    closeModal();
+    render();
+  } else {
+    toast('导入失败，请检查格式');
+  }
+}
+
+// 导出成员
+function exportMembers() {
+  var members = data.members || [];
+  if (members.length === 0) { toast('暂无成员可导出'); return; }
+
+  var csv = '\ufeff序号,姓名,手机号,等级\n';
+  members.forEach(function(m, idx) {
+    csv += (idx+1)+','+(m.name||'')+','+(m.phone||'')+','+(m.level||'C')+'\n';
+  });
+
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  var link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = '团队成员_'+formatDate(Date.now())+'.csv';
+  link.click();
+  toast('已导出 '+members.length+' 条');
+}
+
+// 管理端-报名审核
+function renderAdminRegs() {
+  var pendingRegs = data.registrations.filter(function(r){ return !r.isCompleted; });
+  if (pendingRegs.length === 0) {
+    return '<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">没有待处理的报名</div><div class="empty-sub">所有报名已确认完成</div></div>';
+  }
+  var html = '';
+  var grouped = {};
+  pendingRegs.forEach(function(r) {
+    if (!grouped[r.taskId]) grouped[r.taskId] = [];
+    grouped[r.taskId].push(r);
+  });
+  Object.keys(grouped).forEach(function(tid) {
+    var task = data.tasks.find(function(t){ return t.id === parseInt(tid); });
+    if (!task) return;
+    html += '<div class="card">';
+    html += '<div style="font-size:14px;font-weight:600;margin-bottom:4px;">'+escapeHtml(task.title)+'</div>';
+    html += '<div style="font-size:12px;color:var(--text-3);margin-bottom:4px;">'+escapeHtml(task.topic)+'</div>';
+    // 质量指标
+    if (task.targetReads || task.targetInteractions) {
+      html += '<div style="font-size:11px;color:var(--primary);margin-bottom:8px;">';
+      if (task.targetReads) html += '目标阅读 '+formatNum(task.targetReads)+'　';
+      if (task.targetInteractions) html += '目标互动 '+formatNum(task.targetInteractions);
+      html += '</div>';
+    }
+    html += '<div style="height:1px;background:var(--gray-1);margin-bottom:8px;"></div>';
+    grouped[tid].forEach(function(reg) {
+      html += '<div class="reg-item">';
+      html += '<div class="reg-name">'+escapeHtml(reg.name)+'</div>';
+      if (reg.followers) html += '<div class="reg-followers">粉丝 '+formatNum(reg.followers)+'</div>';
+      if (reg.phone) html += '<div class="reg-phone">'+escapeHtml(reg.phone)+'</div>';
+      if (reg.remark) html += '<div class="reg-phone">💬 '+escapeHtml(reg.remark)+'</div>';
+      html += '<button class="btn btn-success btn-sm" onclick="confirmComplete('+reg.id+')">确认完成</button>';
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+  return html;
+}
+
+function confirmComplete(regId) {
+  var reg = data.registrations.find(function(r){ return r.id === regId; });
+  if (reg) {
+    reg.isCompleted = true;
+    reg.completedAt = Date.now();
+    DB.save(data);
+    toast('已确认完成：' + reg.name);
+    render();
+  }
+}
+
+// 管理端-月度统计
+function renderAdminStats() {
+  var stats = calcRankStats(currentPeriod);
+  var list = stats.list;
+  var html = '<div class="period-tabs">';
+  html += '<div class="pt '+(currentPeriod==='month'?'active':'')+'" onclick="switchPeriod(\'month\')">本月</div>';
+  html += '<div class="pt '+(currentPeriod==='quarter'?'active':'')+'" onclick="switchPeriod(\'quarter\')">本季度</div>';
+  html += '<div class="pt '+(currentPeriod==='year'?'active':'')+'" onclick="switchPeriod(\'year\')">本年度</div>';
+  html += '<div class="pt '+(currentPeriod==='all'?'active':'')+'" onclick="switchPeriod(\'all\')">全部</div>';
+  html += '</div>';
+  html += '<div class="stat-grid">';
+  html += '<div class="stat-card"><div class="stat-num">'+data.tasks.length+'</div><div class="stat-label">总任务数</div></div>';
+  html += '<div class="stat-card success"><div class="stat-num">'+stats.totalCompleted+'</div><div class="stat-label">完成稿件数</div></div>';
+  html += '</div>';
+  if (list.length === 0) {
+    html += '<div class="empty"><div class="empty-icon">📊</div><div class="empty-text">暂无统计数据</div></div>';
+    return html;
+  }
+  html += '<div style="padding:0 12px;font-size:13px;font-weight:600;color:var(--text-2);margin:8px 0;">完成排行榜</div>';
+  html += '<div class="rank-list">';
+  list.forEach(function(item, idx) {
+    var rankClass = idx === 0 ? 'r1' : idx === 1 ? 'r2' : idx === 2 ? 'r3' : 'rn';
+    html += '<div class="rank-item">';
+    html += '<div class="rank-num '+rankClass+'">'+(idx+1)+'</div>';
+    html += '<div class="rank-info">';
+    html += '<div class="rank-name">'+escapeHtml(item.name);
+    var member = (data.members||[]).find(function(m){ return m.name === item.name; });
+    if (member && member.level) {
+      html += ' <span class="level-badge level-'+member.level+'">'+member.level+'</span>';
+    }
+    html += '</div>';
+    html += '<div class="rank-detail">首篇完成 '+formatDate(item.firstCompletedAt)+' · 粉丝 '+formatNum(item.totalFollowers)+'</div>';
+    html += '</div>';
+    html += '<div class="rank-score">'+item.count+'<span>篇</span></div>';
+    html += '</div>';
+  });
+  html += '</div>';
+  html += '<button class="btn btn-primary btn-block" style="margin:16px 12px;width:calc(100% - 24px);" onclick="exportStats()">导出统计数据</button>';
+  return html;
+}
+
+function exportStats() {
+  var stats = calcRankStats(currentPeriod);
+  var periodName = currentPeriod === 'month' ? getCurrentMonth() : currentPeriod === 'quarter' ? new Date().getFullYear()+'Q'+(Math.floor(new Date().getMonth()/3)+1) : currentPeriod === 'year' ? new Date().getFullYear()+'年' : '全部';
+  var csv = '\ufeff排名,姓名,完成稿件数,粉丝数,首篇完成日期\n';
+  stats.list.forEach(function(item, idx) {
+    csv += (idx+1)+','+item.name+','+item.count+','+(item.totalFollowers||0)+','+formatDate(item.firstCompletedAt)+'\n';
+  });
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  var link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = '稿件统计_'+periodName+'.csv';
+  link.click();
+  toast('已导出');
+}
+
+// ========== 管理员登录 ==========
+function showAdminLogin() {
+  var html = '<div class="modal-mask" onclick="closeModal(event)">';
+  html += '<div class="modal" onclick="event.stopPropagation()">';
+  html += '<div class="modal-head"><span>管理员登录</span><button class="close" onclick="closeModal()">&times;</button></div>';
+  html += '<div class="modal-body">';
+  html += '<div class="form-group"><label>管理密码</label><input id="adminPwd" type="password" placeholder="请输入管理密码" value=""></div>';
+  html += '<p style="font-size:12px;color:var(--text-3);">请输入管理密码</p>';
+  html += '</div>';
+  html += '<div class="modal-foot">';
+  html += '<button class="btn btn-outline" style="flex:1;" onclick="closeModal()">取消</button>';
+  html += '<button class="btn btn-primary" style="flex:2;" onclick="adminLogin()">登录</button>';
+  html += '</div>';
+  html += '</div></div>';
+  showModal(html);
+}
+
+function adminLogin() {
+  var pwd = document.getElementById('adminPwd').value;
+  if (pwd === data.adminPassword) {
+    data.isAdmin = true;
+    DB.save(data);
+    closeModal();
+    currentView = 'admin';
+    currentTab = 'adminTasks';
+    toast('管理员已登录');
+    render();
+  } else {
+    toast('密码错误');
+  }
+}
+
+function switchView(view) {
+  if (view === 'admin' && !data.isAdmin) { showAdminLogin(); return; }
+  currentView = view;
+  currentTab = view === 'admin' ? 'adminTasks' : 'taskList';
+  render();
+}
+
+// ========== 通用交互 ==========
+function showModal(html) {
+  var old = document.querySelector('.modal-mask');
+  if (old) old.remove();
+  var div = document.createElement('div');
+  div.innerHTML = html;
+  document.body.appendChild(div.firstChild);
+}
+function closeModal(e) {
+  if (e && e.target !== e.currentTarget) return;
+  var el = document.querySelector('.modal-mask');
+  if (el) el.remove();
+}
+function switchTab(tab) { currentTab = tab; render(); }
+function switchPeriod(p) { currentPeriod = p; render(); }
+
+render();
+</script>
+</body>
+</html>
