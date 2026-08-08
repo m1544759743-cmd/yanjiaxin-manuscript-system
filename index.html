@@ -306,17 +306,17 @@ function render() {
   }
   var html = '';
   html += '<div class="navbar">';
-  html += '<h1>闫佳欣组稿件报名系统</h1>';
-  html += '<div style="display:flex;gap:6px;">';
-  html += '<button class="nav-btn" onclick="refreshData()" style="font-size:14px;padding:6px 10px;">🔄</button>';
+  html += '<h1 style="font-size:14px;">稿件报名系统</h1>';
+  html += '<div style="display:flex;gap:4px;flex-shrink:0;">';
+  html += '<button class="nav-btn" onclick="refreshData()" style="font-size:13px;padding:5px 8px;">🔄</button>';
   if (isAdmin) {
     if (currentView === 'admin') {
-      html += '<button class="nav-btn" onclick="exitAdmin()">退出管理</button>';
+      html += '<button class="nav-btn" onclick="exitAdmin()">退出</button>';
     } else {
-      html += '<button class="nav-btn" onclick="switchView(\'admin\')">管理后台</button>';
+      html += '<button class="nav-btn" onclick="switchView(\'admin\')">管理</button>';
     }
   } else {
-    html += '<button class="nav-btn" onclick="showAdminLogin()">管理员</button>';
+    html += '<button class="nav-btn" onclick="showAdminLogin()">管理</button>';
   }
   html += '</div>';
   html += '</div>';
