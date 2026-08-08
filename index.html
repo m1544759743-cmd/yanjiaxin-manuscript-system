@@ -548,7 +548,7 @@ function renderMyTasks() {
   var html = '<div class="card" style="display:flex;align-items:center;justify-content:space-between;">';
   html += '<div><div style="font-size:15px;font-weight:600;">'+escapeHtml(myName)+'</div>';
   html += '<div style="font-size:12px;color:var(--text-3);">共报名'+myRegs.length+'篇，已完成'+myRegs.filter(function(r){return r.isCompleted;}).length+'篇</div></div>';
-  html += '<button class="btn btn-outline btn-sm" onclick="localStorage.removeItem(\'my_name\');currentTab=\'taskList\';render();">切换</button>';
+  html += '<button class="btn btn-outline btn-sm" onclick="showSwitchNameModal()">切换</button>';
   html += '</div>';
 
   if (myRegs.length === 0) {
@@ -576,6 +576,57 @@ function renderMyTasks() {
     });
   }
   return html;
+}
+
+function showSwitchNameModal() {
+  // 收集所有报名过的姓名（去重）
+  var names = [];
+  data.registrations.forEach(function(r) {
+    if (r.name && names.indexOf(r.name) === -1) names.push(r.name);
+  });
+  names.sort();
+
+  var currentName = localStorage.getItem('my_name') || '';
+
+  var html = '<div class="modal-mask" onclick="closeModal(event)">';
+  html += '<div class="modal" onclick="event.stopPropagation()">';
+  html += '<div class="modal-head"><span>切换用户</span><button class="close" onclick="closeModal()">&times;</button></div>';
+  html += '<div class="modal-body">';
+  if (names.length > 0) {
+    html += '<div style="font-size:12px;color:var(--text-3);margin-bottom:8px;">点击选择已报名的用户</div>';
+    names.forEach(function(n) {
+      var active = n === currentName;
+      html += '<div onclick="switchToName(\''+escapeHtml(n).replace(/'/g, "\\'")+'\')" style="padding:12px 14px;border:1px solid '+(active?'var(--primary)':'var(--gray-2)')+';border-radius:8px;margin-bottom:6px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;background:'+(active?'var(--primary-light)':'#fff')+';">';
+      html += '<span style="font-size:14px;font-weight:'+(active?'600':'400')+';color:'+(active?'var(--primary)':'var(--text-1)')+';">'+escapeHtml(n)+'</span>';
+      if (active) html += '<span style="font-size:12px;color:var(--primary);">当前</span>';
+      html += '</div>';
+    });
+  }
+  // 手动输入
+  html += '<div style="height:1px;background:var(--gray-2);margin:10px 0;"></div>';
+  html += '<div class="form-group" style="margin-bottom:0;"><label>或输入新姓名</label>';
+  html += '<input id="switchNameInput" type="text" placeholder="输入姓名" maxlength="20" style="margin-bottom:8px;">';
+  html += '<button class="btn btn-primary btn-block" onclick="switchToInputName()">确认切换</button>';
+  html += '</div>';
+  html += '</div>';
+  html += '</div></div>';
+  showModal(html);
+}
+
+function switchToName(name) {
+  localStorage.setItem('my_name', name);
+  closeModal();
+  toast('已切换到 ' + name);
+  render();
+}
+
+function switchToInputName() {
+  var name = document.getElementById('switchNameInput').value.trim();
+  if (!name) { toast('请输入姓名'); return; }
+  localStorage.setItem('my_name', name);
+  closeModal();
+  toast('已切换到 ' + name);
+  render();
 }
 
 function saveMyName() {
