@@ -170,53 +170,83 @@ body { font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaH
 <div id="toast" class="toast hidden"></div>
 
 <script>
-// ========== 数据层 ==========
-var DB = {
-  key: 'manuscript_system_v3',
-  load: function() {
-    var raw = localStorage.getItem(this.key);
-    if (raw) { try { return JSON.parse(raw); } catch(e){} }
-    var now = Date.now();
-    var data = {
-      isAdmin: false,
-      adminPassword: '20020303',
-      tasks: [
-        {
-          id:1, title:'8月品牌稿',
-          topic:'夏季品牌活动推广稿件，突出产品清凉感与年轻化调性',
-          status:'open', deadline: now+86400000*5, createdAt: now-86400000*2,
-          targetReads: 10000, targetInteractions: 500
-        },
-        {
-          id:2, title:'8月产品稿',
-          topic:'新品上市稿件，围绕核心卖点撰写',
-          status:'open', deadline: now+86400000*3, createdAt: now-86400000,
-          targetReads: 5000, targetInteractions: 300
-        }
-      ],
-      registrations: [
-        { id:1, taskId:1, name:'张三', phone:'138****8888', remark:'', followers:12000, isCompleted:true, completedAt: now-86400000, registeredAt: now-86400000*2 },
-        { id:2, taskId:1, name:'李四', phone:'139****6666', remark:'想写评测方向', followers:8500, isCompleted:false, completedAt:null, registeredAt: now-86400000 },
-        { id:3, taskId:1, name:'张三', phone:'', remark:'第二次报名', followers:12000, isCompleted:false, completedAt:null, registeredAt: now-3600000 },
-        { id:4, taskId:2, name:'王五', phone:'137****5555', remark:'', followers:56000, isCompleted:false, completedAt:null, registeredAt: now-7200000 },
-        { id:5, taskId:2, name:'张三', phone:'', remark:'', followers:12000, isCompleted:true, completedAt: now-3600000*2, registeredAt: now-3600000*3 },
-      ],
-      members: [
-        { id:1, name:'张三', phone:'138****8888', level:'A' },
-        { id:2, name:'李四', phone:'139****6666', level:'B' },
-        { id:3, name:'王五', phone:'137****5555', level:'C' }
-      ],
-      nextTaskId: 3,
-      nextRegId: 6,
-      nextMemberId: 4
-    };
-    this.save(data);
-    return data;
-  },
-  save: function(data) { localStorage.setItem(this.key, JSON.stringify(data)); }
-};
+// ========== Supabase 配置 ==========
+var SUPABASE_URL = 'https://tzbofahhqwlxnytekksh.supabase.co';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6Ym9mYWhocXdseG55dGVra3NoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxODQzODUsImV4cCI6MjEwMTc2MDM4NX0.5QMbslW0GOfwmFSZFD1bdmTti5iSPECj9ElNJ7FaUSk';
 
-var data = DB.load();
+function apiHeaders() {
+  return {
+    'apikey': SUPABASE_KEY,
+    'Authorization': 'Bearer ' + SUPABASE_KEY,
+    'Content-Type': 'application/json'
+  };
+}
+
+// ========== 全局状态 ==========
+var data = { tasks: [], registrations: [], members: [] };
+var dataLoaded = false;
+var isAdmin = localStorage.getItem('isAdmin') === 'true';
+var adminPassword = '20020303';
+
+// ========== 数据加载 ==========
+async function loadData() {
+  try {
+    var [tasksRes, regsRes, membersRes] = await Promise.all([
+      fetch(SUPABASE_URL + '/rest/v1/tasks?select=*&order=id.desc', { headers: apiHeaders() }),
+      fetch(SUPABASE_URL + '/rest/v1/registrations?select=*&order=id.desc', { headers: apiHeaders() }),
+      fetch(SUPABASE_URL + '/rest/v1/members?select=*&order=id.asc', { headers: apiHeaders() })
+    ]);
+    var tasks = await tasksRes.json();
+    var regs = await regsRes.json();
+    var members = await membersRes.json();
+    if (tasks.error) throw tasks;
+    if (regs.error) throw regs;
+    if (members.error) throw members;
+    data.tasks = tasks.map(function(r) {
+      return { id: r.id, title: r.title, topic: r.topic, status: r.status,
+        deadline: r.deadline, createdAt: r.created_at,
+        targetReads: r.target_reads, targetInteractions: r.target_interactions };
+    });
+    data.registrations = regs.map(function(r) {
+      return { id: r.id, taskId: r.task_id, name: r.name, phone: r.phone || '',
+        remark: r.remark || '', followers: r.followers || 0,
+        isCompleted: r.is_completed, completedAt: r.completed_at,
+        registeredAt: r.registered_at };
+    });
+    data.members = members.map(function(r) {
+      return { id: r.id, name: r.name, phone: r.phone || '', level: r.level || 'C' };
+    });
+    dataLoaded = true;
+  } catch(e) {
+    console.error('Load data error:', e);
+    dataLoaded = true;
+  }
+  return data;
+}
+
+// ========== 写入操作 ==========
+async function apiInsert(table, row) {
+  var res = await fetch(SUPABASE_URL + '/rest/v1/' + table, {
+    method: 'POST', headers: Object.assign(apiHeaders(), { 'Prefer': 'return=representation' }),
+    body: JSON.stringify(row)
+  });
+  return res.json();
+}
+
+async function apiUpdate(table, id, patch) {
+  var res = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?id=eq.' + id, {
+    method: 'PATCH', headers: Object.assign(apiHeaders(), { 'Prefer': 'return=minimal' }),
+    body: JSON.stringify(patch)
+  });
+  return res.ok;
+}
+
+async function apiDelete(table, id) {
+  var res = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?id=eq.' + id, {
+    method: 'DELETE', headers: apiHeaders()
+  });
+  return res.ok;
+}
 
 // ========== 工具函数 ==========
 function toast(msg, duration) {
@@ -269,16 +299,28 @@ var currentPeriod = 'month';
 
 function render() {
   var app = document.getElementById('app');
+  if (!dataLoaded) {
+    app.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:60vh;flex-direction:column;"><div style="font-size:28px;margin-bottom:8px;">⏳</div><div style="color:var(--text-2);font-size:14px;">加载中...</div></div>';
+    loadData().then(function() { render(); });
+    return;
+  }
   var html = '';
   html += '<div class="navbar">';
   html += '<h1>闫佳欣组稿件报名系统</h1>';
-  if (data.isAdmin) {
-    html += '<button class="nav-btn" onclick="switchView(\'admin\')">管理后台</button>';
+  html += '<div style="display:flex;gap:6px;">';
+  html += '<button class="nav-btn" onclick="refreshData()" style="font-size:14px;padding:6px 10px;">🔄</button>';
+  if (isAdmin) {
+    if (currentView === 'admin') {
+      html += '<button class="nav-btn" onclick="exitAdmin()">退出管理</button>';
+    } else {
+      html += '<button class="nav-btn" onclick="switchView(\'admin\')">管理后台</button>';
+    }
   } else {
     html += '<button class="nav-btn" onclick="showAdminLogin()">管理员</button>';
   }
   html += '</div>';
-  if (currentView === 'admin' && data.isAdmin) {
+  html += '</div>';
+  if (currentView === 'admin' && isAdmin) {
     html += renderAdmin();
   } else {
     html += renderTabs();
@@ -457,23 +499,37 @@ function submitReg(taskId) {
   if (!name) { toast('请输入姓名'); return; }
   if (!followers || parseInt(followers) < 0) { toast('请输入账号粉丝数'); return; }
 
-  data.registrations.push({
-    id: data.nextRegId++,
-    taskId: taskId,
-    name: name,
-    phone: phone,
-    remark: remark,
-    followers: parseInt(followers),
-    isCompleted: false,
-    completedAt: null,
-    registeredAt: Date.now()
+  var btn = event.target;
+  btn.disabled = true;
+  btn.textContent = '提交中...';
+
+  apiInsert('registrations', {
+    task_id: taskId, name: name, phone: phone, remark: remark,
+    followers: parseInt(followers), is_completed: false,
+    completed_at: null, registered_at: Date.now()
+  }).then(function(res) {
+    if (res && res[0]) {
+      var r = res[0];
+      data.registrations.unshift({
+        id: r.id, taskId: r.task_id, name: r.name, phone: r.phone || '',
+        remark: r.remark || '', followers: r.followers || 0,
+        isCompleted: r.is_completed, completedAt: r.completed_at,
+        registeredAt: r.registered_at
+      });
+      localStorage.setItem('my_name', name);
+      closeModal();
+      toast('报名成功！');
+      render();
+    } else {
+      btn.disabled = false;
+      btn.textContent = '确认报名';
+      toast('报名失败，请重试');
+    }
+  }).catch(function(err) {
+    btn.disabled = false;
+    btn.textContent = '确认报名';
+    toast('网络错误，请重试');
   });
-  DB.save(data);
-  // 记住姓名
-  localStorage.setItem('my_name', name);
-  closeModal();
-  toast('报名成功！');
-  render();
 }
 
 // ========== 我的稿件 ==========
@@ -492,7 +548,7 @@ function renderMyTasks() {
   var html = '<div class="card" style="display:flex;align-items:center;justify-content:space-between;">';
   html += '<div><div style="font-size:15px;font-weight:600;">'+escapeHtml(myName)+'</div>';
   html += '<div style="font-size:12px;color:var(--text-3);">共报名'+myRegs.length+'篇，已完成'+myRegs.filter(function(r){return r.isCompleted;}).length+'篇</div></div>';
-  html += '<button class="btn btn-outline btn-sm" onclick="localStorage.removeItem(\'my_name\');render();">切换</button>';
+  html += '<button class="btn btn-outline btn-sm" onclick="localStorage.removeItem(\'my_name\');currentTab=\'taskList\';render();">切换</button>';
   html += '</div>';
 
   if (myRegs.length === 0) {
@@ -717,54 +773,72 @@ function saveTask(taskId) {
   if (!title) { toast('请输入项目名称'); return; }
   if (!topic) { toast('请输入稿件主题'); return; }
   var deadlineTs = deadlineStr ? new Date(deadlineStr).getTime() : null;
-  var targetReads = reads ? parseInt(reads) : null;
-  var targetInteractions = interactions ? parseInt(interactions) : null;
+  var targetReads = reads ? parseInt(reads) : 0;
+  var targetInteractions = interactions ? parseInt(interactions) : 0;
+
+  var btn = event.target;
+  btn.disabled = true;
+  btn.textContent = '保存中...';
 
   if (taskId) {
-    var task = data.tasks.find(function(t){ return t.id === taskId; });
-    if (task) {
-      task.title = title;
-      task.topic = topic;
-      task.deadline = deadlineTs;
-      task.targetReads = targetReads;
-      task.targetInteractions = targetInteractions;
-    }
-    toast('修改成功');
-  } else {
-    data.tasks.push({
-      id: data.nextTaskId++,
-      title: title,
-      topic: topic,
-      status: 'open',
-      deadline: deadlineTs,
-      createdAt: Date.now(),
-      targetReads: targetReads,
-      targetInteractions: targetInteractions
+    apiUpdate('tasks', taskId, {
+      title: title, topic: topic, deadline: deadlineTs,
+      target_reads: targetReads, target_interactions: targetInteractions
+    }).then(function(ok) {
+      if (ok) {
+        var task = data.tasks.find(function(t){ return t.id === taskId; });
+        if (task) {
+          task.title = title; task.topic = topic; task.deadline = deadlineTs;
+          task.targetReads = targetReads; task.targetInteractions = targetInteractions;
+        }
+        closeModal();
+        toast('修改成功');
+        render();
+      } else { toast('保存失败'); btn.disabled = false; btn.textContent = '保存修改'; }
     });
-    toast('发布成功');
+  } else {
+    apiInsert('tasks', {
+      title: title, topic: topic, status: 'open', deadline: deadlineTs,
+      created_at: Date.now(), target_reads: targetReads, target_interactions: targetInteractions
+    }).then(function(res) {
+      if (res && res[0]) {
+        var r = res[0];
+        data.tasks.unshift({
+          id: r.id, title: r.title, topic: r.topic, status: r.status,
+          deadline: r.deadline, createdAt: r.created_at,
+          targetReads: r.target_reads, targetInteractions: r.target_interactions
+        });
+        closeModal();
+        toast('发布成功');
+        render();
+      } else { toast('发布失败'); btn.disabled = false; btn.textContent = '发布'; }
+    });
   }
-  DB.save(data);
-  closeModal();
-  render();
 }
 
 function closeTask(taskId) {
   var task = data.tasks.find(function(t){ return t.id === taskId; });
   if (task) {
-    task.status = 'closed';
-    DB.save(data);
-    toast('已截止报名');
-    render();
+    apiUpdate('tasks', taskId, { status: 'closed' }).then(function(ok) {
+      if (ok) {
+        task.status = 'closed';
+        toast('已截止报名');
+        render();
+      } else { toast('操作失败'); }
+    });
   }
 }
 
 function deleteTask(taskId) {
   if (!confirm('确定删除这个任务吗？相关的报名记录也会被删除。')) return;
-  data.tasks = data.tasks.filter(function(t){ return t.id !== taskId; });
-  data.registrations = data.registrations.filter(function(r){ return r.taskId !== taskId; });
-  DB.save(data);
-  toast('已删除');
-  render();
+  apiDelete('tasks', taskId).then(function(ok) {
+    if (ok) {
+      data.tasks = data.tasks.filter(function(t){ return t.id !== taskId; });
+      data.registrations = data.registrations.filter(function(r){ return r.taskId !== taskId; });
+      toast('已删除');
+      render();
+    } else { toast('删除失败'); }
+  });
 }
 
 // 导出单个任务的报名名单
@@ -921,30 +995,42 @@ function saveMember(memberId) {
   if (!name) { toast('请输入姓名'); return; }
   if (!['A','B','C'].includes(level)) level = 'C';
 
-  if (!data.members) data.members = [];
+  var btn = event.target;
+  btn.disabled = true;
+  btn.textContent = '保存中...';
 
   if (memberId) {
-    var m = data.members.find(function(x){ return x.id === memberId; });
-    if (m) {
-      m.name = name; m.phone = phone; m.level = level;
-    }
-    toast('修改成功');
+    apiUpdate('members', memberId, { name: name, phone: phone, level: level }).then(function(ok) {
+      if (ok) {
+        var m = data.members.find(function(x){ return x.id === memberId; });
+        if (m) { m.name = name; m.phone = phone; m.level = level; }
+        closeModal();
+        toast('修改成功');
+        render();
+      } else { toast('保存失败'); btn.disabled = false; btn.textContent = '保存'; }
+    });
   } else {
-    if (!data.nextMemberId) data.nextMemberId = 1;
-    data.members.push({ id: data.nextMemberId++, name: name, phone: phone, level: level });
-    toast('添加成功');
+    apiInsert('members', { name: name, phone: phone, level: level }).then(function(res) {
+      if (res && res[0]) {
+        var r = res[0];
+        data.members.push({ id: r.id, name: r.name, phone: r.phone || '', level: r.level || 'C' });
+        closeModal();
+        toast('添加成功');
+        render();
+      } else { toast('添加失败'); btn.disabled = false; btn.textContent = '添加'; }
+    });
   }
-  DB.save(data);
-  closeModal();
-  render();
 }
 
 function deleteMember(memberId) {
   if (!confirm('确定删除该成员吗？')) return;
-  data.members = (data.members||[]).filter(function(m){ return m.id !== memberId; });
-  DB.save(data);
-  toast('已删除');
-  render();
+  apiDelete('members', memberId).then(function(ok) {
+    if (ok) {
+      data.members = data.members.filter(function(m){ return m.id !== memberId; });
+      toast('已删除');
+      render();
+    } else { toast('删除失败'); }
+  });
 }
 
 // 批量导入
@@ -996,14 +1082,12 @@ function doImportMembers() {
   if (!text) { toast('请输入或导入数据'); return; }
 
   var lines = text.split(/\r?\n/);
-  var success = 0, fail = 0;
-  if (!data.members) data.members = [];
-  if (!data.nextMemberId) data.nextMemberId = 1;
+  var toInsert = [];
+  var fail = 0;
 
   lines.forEach(function(line) {
     line = line.trim();
     if (!line) return;
-    // 跳过表头
     if (/^姓[名,]/.test(line) || /^姓名/.test(line)) return;
 
     var parts = line.split(/[,，\t]/);
@@ -1013,24 +1097,34 @@ function doImportMembers() {
 
     if (!name) { fail++; return; }
     if (!['A','B','C'].includes(level)) level = 'C';
-
-    data.members.push({
-      id: data.nextMemberId++,
-      name: name,
-      phone: phone,
-      level: level
-    });
-    success++;
+    toInsert.push({ name: name, phone: phone, level: level });
   });
 
-  if (success > 0) {
-    DB.save(data);
-    toast('成功导入 '+success+' 条'+(fail>0?'，失败 '+fail+' 条':''));
+  if (toInsert.length === 0) { toast('没有有效数据'); return; }
+
+  var btn = event.target;
+  btn.disabled = true;
+  btn.textContent = '导入中...';
+
+  // 逐条插入
+  var inserted = 0;
+  var promises = toInsert.map(function(row) {
+    return apiInsert('members', row).then(function(res) {
+      if (res && res[0]) {
+        var r = res[0];
+        data.members.push({ id: r.id, name: r.name, phone: r.phone || '', level: r.level || 'C' });
+        inserted++;
+      }
+    }).catch(function() { fail++; });
+  });
+
+  Promise.all(promises).then(function() {
+    btn.disabled = false;
+    btn.textContent = '导入';
+    toast('成功导入 ' + inserted + ' 条' + (fail > 0 ? '，失败 ' + fail + ' 条' : ''));
     closeModal();
     render();
-  } else {
-    toast('导入失败，请检查格式');
-  }
+  });
 }
 
 // 导出成员
@@ -1094,11 +1188,16 @@ function renderAdminRegs() {
 function confirmComplete(regId) {
   var reg = data.registrations.find(function(r){ return r.id === regId; });
   if (reg) {
-    reg.isCompleted = true;
-    reg.completedAt = Date.now();
-    DB.save(data);
-    toast('已确认完成：' + reg.name);
-    render();
+    apiUpdate('registrations', regId, {
+      is_completed: true, completed_at: Date.now()
+    }).then(function(ok) {
+      if (ok) {
+        reg.isCompleted = true;
+        reg.completedAt = Date.now();
+        toast('已确认完成：' + reg.name);
+        render();
+      } else { toast('操作失败'); }
+    });
   }
 }
 
@@ -1177,9 +1276,9 @@ function showAdminLogin() {
 
 function adminLogin() {
   var pwd = document.getElementById('adminPwd').value;
-  if (pwd === data.adminPassword) {
-    data.isAdmin = true;
-    DB.save(data);
+  if (pwd === adminPassword) {
+    isAdmin = true;
+    localStorage.setItem('isAdmin', 'true');
     closeModal();
     currentView = 'admin';
     currentTab = 'adminTasks';
@@ -1191,10 +1290,25 @@ function adminLogin() {
 }
 
 function switchView(view) {
-  if (view === 'admin' && !data.isAdmin) { showAdminLogin(); return; }
+  if (view === 'admin' && !isAdmin) { showAdminLogin(); return; }
   currentView = view;
   currentTab = view === 'admin' ? 'adminTasks' : 'taskList';
   render();
+}
+
+function exitAdmin() {
+  isAdmin = false;
+  localStorage.removeItem('isAdmin');
+  currentView = 'taskList';
+  currentTab = 'taskList';
+  toast('已退出管理');
+  render();
+}
+
+function refreshData() {
+  dataLoaded = false;
+  toast('刷新中...');
+  loadData().then(function() { render(); });
 }
 
 // ========== 通用交互 ==========
